@@ -7,18 +7,17 @@ from __future__ import annotations
 import calendar
 import json
 import os
-import re
 from contextlib import asynccontextmanager
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional
 
 from bson import json_util
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Path, Query, Request, Response, status
-from pydantic import BaseModel, Field, StrictInt, field_validator
+from fastapi import FastAPI, HTTPException, Path, Query
+from pydantic import BaseModel, Field, StrictInt
 from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
-from pymongo.errors import DuplicateKeyError, PyMongoError
+from pymongo.errors import DuplicateKeyError
 
 # Priority: real environment variables override local .env
 load_dotenv()
@@ -44,7 +43,7 @@ def init_indexes():
         db.attendance_logs.create_index([("emp_code", ASCENDING), ("punch_in", DESCENDING)])
         db.attendance_logs.create_index([("date", DESCENDING), ("emp_code", ASCENDING)])
         db.attendance_logs.create_index([("date", ASCENDING), ("late_minutes", ASCENDING), ("emp_code", ASCENDING)])
-    except Exception as e:
+    except Exception:
         # Do not crash startup if MongoDB is unreachable yet; health check handles readiness
         pass
 

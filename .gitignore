@@ -8,4 +8,7 @@ __pycache__/
 .DS_Store
 *.log
 *.mongodb.js
+INTERVIEW_GUIDE.md
+test_live_api.py
+verify_all_endpoints.py
 
