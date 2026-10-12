@@ -245,3 +245,4 @@ flowchart TD
 > *"At 100x volume—around 10 million attendance logs and tens of thousands of employees—running cross-collection aggregations and window functions on every request would degrade latency and saturate I/O. I would:
 > 1. Partition/shard `attendance_logs` by date range or compound shard key `{ date: 1, emp_code: 1 }`.
 > 2. Introduce pre-aggregated daily and monthly rollup collections maintained asynchronously via MongoDB Change Streams or an outbox event processor upon punch-out and regularization events. Analytics queries would then read pre-aggregated rollups in constant $O(1)$ time."*
+

@@ -5,6 +5,7 @@ Contract: openapi.yaml (v2.0.0) | Data Model: DATA_MODEL.md | Rules: R1 - R10
 from __future__ import annotations
 
 import calendar
+import json
 import os
 import re
 from contextlib import asynccontextmanager
@@ -12,6 +13,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Literal, Optional
 
+from bson import json_util
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Path, Query, Request, Response, status
 from pydantic import BaseModel, Field, StrictInt, field_validator
@@ -1090,6 +1092,10 @@ def department_trend(
     return {"department": department, "items": items}
 
 
+def clean_bson(doc: dict) -> dict:
+    return json.loads(json_util.dumps(doc))
+
+
 # --------------------------------------------------------------------------- #
 # Endpoint: Admin Explain
 # --------------------------------------------------------------------------- #
@@ -1129,8 +1135,15 @@ def admin_explain(
         if status:
             q["status"] = status
         skip = (page - 1) * page_size
-        explain_output = db.attendance_logs.find(q).sort("date", DESCENDING).skip(skip).limit(page_size).explain("executionStats")
-        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": explain_output}
+        explain_cmd: dict[str, Any] = {
+            "find": "attendance_logs",
+            "filter": q,
+            "sort": {"date": -1},
+            "skip": skip,
+            "limit": page_size,
+        }
+        explain_output = db.command("explain", explain_cmd, verbosity="executionStats")
+        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": clean_bson(explain_output)}
 
     elif endpoint == "employee_monthly":
         if not emp_code or not month:
@@ -1141,7 +1154,7 @@ def admin_explain(
             {"aggregate": "attendance_logs", "pipeline": pipeline, "cursor": {}},
             verbosity="executionStats",
         )
-        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": explain_output}
+        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": clean_bson(explain_output)}
 
     elif endpoint == "department_summary":
         if not month:
@@ -1152,7 +1165,7 @@ def admin_explain(
             {"aggregate": "employees", "pipeline": pipeline, "cursor": {}},
             verbosity="executionStats",
         )
-        return {"endpoint": endpoint, "collection": "employees", "explain": explain_output}
+        return {"endpoint": endpoint, "collection": "employees", "explain": clean_bson(explain_output)}
 
     elif endpoint == "late_leaderboard":
         if not month:
@@ -1163,7 +1176,7 @@ def admin_explain(
             {"aggregate": "attendance_logs", "pipeline": pipeline, "cursor": {}},
             verbosity="executionStats",
         )
-        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": explain_output}
+        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": clean_bson(explain_output)}
 
     elif endpoint == "department_trend":
         if not department or not from_date or not to_date:
@@ -1176,4 +1189,4 @@ def admin_explain(
             {"aggregate": "attendance_logs", "pipeline": pipeline, "cursor": {}},
             verbosity="executionStats",
         )
-        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": explain_output}
+        return {"endpoint": endpoint, "collection": "attendance_logs", "explain": clean_bson(explain_output)}

@@ -7,4 +7,5 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 *.log
+*.mongodb.js
 
